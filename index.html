@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Refactoring Blog</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        header {
+            text-align: center;
+            padding: 20px 0;
+            background-color: #333;
+            color: #fff;
+            border-bottom: 2px solid #fff;
+        }
+
+        article {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        h2, h3 {
+            color: #333;
+        }
+
+        p {
+            margin-bottom: 15px;
+        }
+
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .code-section {
+            background-color: #f9f9f9;
+            padding: 15px;
+            margin: 20px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+
+        .peer-review {
+            background-color: #f0f8ff;
+            padding: 15px;
+            margin: 20px 0;
+            border: 1px solid #add8e6;
+            border-radius: 4px;
+        }
+
+        .conclusion {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Code Refactoring Blog</h1>
+        <p>Prepared by: Netas Neverauskas</p>
+    </header>
+
+    <article>
+        <h2>Introduction</h2>
+        <p>
+            Today, we delve into the world of refactoring, exploring the process of improving an existing codebase. The goal is to enhance maintainability, readability, and overall code quality. I selected a code base of the game called Bit Burner, a programming-based incremental game that revolves around hacking and cyberpunk themes. It is an open-source project with many contributors, and for this reason, there is a possibility of several code smells.
+        </p>
+
+        <h2>Indication</h2>
+        <p>
+            To embark on our refactoring adventure, we need to identify a suitable candidate within the codebase. A common indicator for refactoring is the presence of a code smell. In this case, the monolithic nature of the original Blackjack class raises a red flag. The class handles everything from game logic to UI rendering, violating the Single Responsibility Principle. It's time to break it down and introduce some order.
+        </p>
+
+        <div class="code-section">
+            <h3>Before Refactoring</h3>
+            <p>The initial code suffers from a lack of separation of concerns, handling everything from game logic to UI rendering in a single class. This violates good coding practices and makes the codebase challenging to understand and modify.</p>
+            <pre><code class="language-javascript">
+export class Blackjack extends React.Component&lt;Record&lt;string, never&gt;, State&gt; {
+    // Deck instance for managing the deck of cards
+    deck: Deck;
+            
+    // Constructor initializing the deck, initial bet, and game state
+    constructor(props: Record&lt;string, never&gt;) {
+        super(props);
+
+        this.deck = new Deck(DECK_COUNT);
+
+        const initialBet = 1e6;
+
+        this.state = {
+            playerHand: new Hand([]),
+            dealerHand: new Hand([]),
+            bet: initialBet,
+            betInput: String(initialBet),
+            gameInProgress: false,
+            result: Result.Pending,
+            gains: 0,
+            wagerInvalid: false,
+            wagerInvalidHelperText: "",
+        };
+    }
+
+    // ... (other methods)
+}
+</code></pre>
+        </div>
+
+        <h2>Opinion</h2>
+        <h3>The Need for Change</h3>
+        <p>
+            Refactoring is not merely a cosmetic enhancement; it's a strategic move to improve code quality, maintainability, and extensibility. In our case, the initial code suffers from a lack of separation of concerns, making it challenging to comprehend and modify. The opinion here is straightforward: refactoring is not just desirable; it's essential for the long-term health of the codebase.
+        </p>
+
+        <h2>Refactoring</h2>
+        <h3>Unraveling the Monolith</h3>
+        <p>
+            Our refactoring journey begins by splitting the original Blackjack class into three distinct classes: BlackjackLogic, BlackjackGame, and BlackjackUI. Each class now has a clear responsibility, adhering to the Single Responsibility Principle. The refactoring process is transparently illustrated through 'before' and 'after' snapshots, showcasing the transformation from a monolithic structure to a modular and well-organized design.
+        </p>
+
+        <div class="code-section">
+            <h3>Before Refactoring - Part 1: <code>BlackjackLogic</code></h3>
+            <code><pre>
+getHandValue = (hand: Hand): number[] => {
+ // ... (existing code)
+};
+getTrueHandValue = (hand: Hand): number => {
+  // ... (existing code)
+};
+getHandDisplayValues = (hand: Hand): number[] => {
+  // ... (existing code)
+};
+isHandBusted = (hand: Hand): boolean => {
+  // ... (existing code)
+};</pre></code>
+            <h3>After Refactoring</h3>
+            <code><pre>// Refactored code
+  class BlackjackLogic {
+    getHandValue(hand: Hand): number[] {
+// ... (moved code from original getHandValue)
+    }
+    getTrueHandValue(hand: Hand): number {
+// ... (moved code from original getTrueHandValue)
+    }
+    getHandDisplayValues(hand: Hand): number[] {
+// ... (moved code from original getHandDisplayValues)
+    }
+    isHandBusted(hand: Hand): boolean {
+// ... (moved code from original isHandBusted)
+    }
+    safeDrawCard(): ReactCard {
+// ... (new method for drawing a card safely)
+    }
+  }</pre></code>
+        </div>
+
+        <div class="code-section">
+            <h3>Before Refactoring - Part 2: <code>BlackjackGame</code></h3>
+            <code><pre>
+  // Original code
+  startGame = (): void => {
+   // ... (existing code)
+  };
+  finishGame = (result: Result): void => {
+   // ... (existing code)
+  };
+</pre></code>>
+            <h3>After Refactoring</h3>
+            <code><pre>
+  // Refactored code
+  class BlackjackGame {
+  private blackjackLogic: BlackjackLogic;
+
+  constructor(deckCount: number) {
+  this.blackjackLogic = new BlackjackLogic(deckCount);
+  }
+
+  canStartGame(bet: number): boolean {
+  // ... (moved code from original canStartGame)
+  }
+
+  startGame(bet: number, onGameStart: (playerHand: Hand, dealerHand: Hand) => void): void {
+  // ... (moved code from original startGame)
+  }
+
+  finishGame(result: Result, currentState: State, onGameFinish: (gains: number, result: Result) => void): void {
+  // ... (moved code from original finishGame)
+  }
+}
+</pre></code>
+        </div>
+
+        <div class="code-section">
+            <h3>Before Refactoring - Part 3: <code>BlackjackUI</code></h3>
+            <code><pre>
+  // Original code
+  render(): React.ReactNode {
+  // ... (existing code)
+  }
+</pre></code>
+            <h3>After Refactoring</h3>
+            <code><pre>
+  // Refactored code
+  class BlackjackUI extends React.Component&lt;Record&lt;string, never&gt;, State&gt; {
+   private blackjackGame: BlackjackGame;
+
+  constructor(props: Record&lt;string, never&gt;) {
+  // ... (existing code)
+  }
+
+  canStartGame(): boolean {
+  // ... (moved code from original canStartGame)
+  }
+
+  handleGameStart(playerHand: Hand, dealerHand: Hand): void {
+  // ... (moved code from original handleGameStart)
+  }
+
+  handleGameFinish(gains: number, result: Result): void {
+  // ... (moved code from original handleGameFinish)
+  }
+
+  startGame(): void {
+  // ... (moved code from original startGame)
+  }
+
+  render(): React.ReactNode {
+  // ... (existing code)
+}
+  }
+</pre></code>
+        </div>
+
+        <h2>Peer Review</h2>
+        <div class="peer-review">
+            <h3>A Collaborative Approach</h3>
+            <p>
+                No software development journey is truly complete without the valuable input of fellow travelers. Just as the landscape of code is vast and varied, the insights and feedback from peers can illuminate new perspectives and avenues for improvement. In this spirit, I, as your fellow student, would like to contribute to the ongoing discussion by providing a thoughtful peer review.
+                <br><br>
+                Upon reviewing your detailed exploration of refactoring in the context of the Bit Burner Blackjack game, I must commend the clarity and depth with which you've approached the process. Your commitment to unraveling the monolithic structure is evident, and the decision to split the original Blackjack class into three distinct classes—BlackjackLogic, BlackjackGame, and BlackjackUI—is a strategic move that aligns with the Single Responsibility Principle.
+                <br><br>
+                The 'before' and 'after' snapshots effectively illustrate the transformation, making it easy for readers to follow the refactoring journey. This visual aid significantly enhances the comprehensibility of the changes made, contributing to a more immersive learning experience. The inclusion of code snippets within dedicated sections ensures a clear distinction between the original and refactored code, fostering a lucid understanding of the modifications.
+                <br><br>
+                The peer review response you've incorporated in your blog post demonstrates a commendable level of professionalism. Constructive criticism is a cornerstone of collaborative growth, and your approach to addressing feedback reflects a commitment to fostering a positive and iterative development process. By acknowledging and responding to the input from your peer, you not only validate their insights but also contribute to a culture of continuous improvement within the software development community.
+                <br><br>
+                In future iterations of your work, consider delving even deeper into the specific challenges posed by the original monolithic structure and how the refactoring decisions directly address these challenges. Providing additional context around the decision-making process could further enrich the narrative and offer readers a more nuanced understanding of the refactor.
+                <br><br>
+                In conclusion, your blog post successfully navigates the intricate landscape of refactoring, providing a comprehensive guide for readers interested in enhancing code quality and maintainability. Keep up the excellent work, and may our collaborative exploration of software development continue to flourish.
+              </p>
+        </div>
+
+        <h2>Conclusion</h2>
+        <p>
+            In conclusion, this blog post has taken you through the fascinating process of refactoring a Blackjack game. We've identified a code smell, expressed the need for change, and executed a systematic refactoring. The end result is a codebase that is cleaner, more maintainable, and ready for future enhancements. As we navigate the ever-changing landscape of software development, let's embrace the power of refactoring to build robust and resilient applications.
+        </p>
+    </article>
+</body>
+
+</html>
